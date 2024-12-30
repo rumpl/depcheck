@@ -5,6 +5,7 @@ import lodash from 'lodash';
 import depcheck from './index';
 import { version, name } from '../package.json';
 import { getConfiguration } from './utils/configuration-reader';
+import findLineInFile from './utils/find-line-in-file';
 
 function checkPathExist(dir, errorMessage) {
   return new Promise((resolve, reject) =>
@@ -60,11 +61,32 @@ function noIssue(result) {
   );
 }
 
-function prettify(caption, deps, oneline) {
+function prettify(
+  caption,
+  deps,
+  oneline,
+  rootDir = null,
+  printJsonLineInKey = null,
+) {
   if (oneline) {
     return deps.length ? [caption, deps.join(' ')] : [];
   }
-  const list = deps.map((dep) => `* ${dep}`);
+
+  const packageJson =
+    rootDir && printJsonLineInKey
+      ? fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8')
+      : null;
+
+  const list = deps.map((dep) => {
+    const lineNumber =
+      packageJson &&
+      printJsonLineInKey &&
+      findLineInFile(packageJson, printJsonLineInKey, dep);
+
+    return `* ${dep}${
+      lineNumber !== null ? ` (package.json:${lineNumber})` : ''
+    }`;
+  });
   return list.length ? [caption].concat(list) : [];
 }
 
@@ -95,16 +117,21 @@ function print(result, log, opt, rootDir) {
       'Unused dependencies',
       result.dependencies,
       opt.oneline,
+      rootDir,
+      'dependencies',
     );
     const devDeps = prettify(
       'Unused devDependencies',
       result.devDependencies,
       opt.oneline,
+      rootDir,
+      'devDependencies',
     );
     const missing = prettify(
       'Missing dependencies',
       mapMissing(result.missing, rootDir, opt.oneline),
       opt.oneline,
+      rootDir,
     );
     const content = deps.concat(devDeps, missing).join('\n');
     log(content);
