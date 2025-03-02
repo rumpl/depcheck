@@ -153,6 +153,7 @@ function parseWebpackConfig(webpackConfig, deps) {
 
 async function loadNextWebpackConfig(filepath) {
   const fakeConfig = {
+    context: process.cwd(),
     plugins: [],
     module: { rules: [] },
     optimization: { splitChunks: { cacheGroups: {} } },
@@ -161,7 +162,10 @@ async function loadNextWebpackConfig(filepath) {
   };
 
   const fakeContext = {
-    webpack: fakeWebpack,
+    webpack: {
+      context: process.cwd(),
+      ...fakeWebpack,
+    },
     defaultLoaders: {},
     dir: 'fakePath',
   };

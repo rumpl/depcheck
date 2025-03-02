@@ -1,5 +1,14 @@
+const path = require('path');
+
 const nextConfig = {
   webpack: (config, { webpack }) => {
+    const iconPath = path.resolve(webpack.context, './icons');
+    const fontPath = path.resolve(config.context, './fonts');
+    Object.assign(config.resolve.alias, {
+      '@icons': iconPath,
+      '@fonts': fontPath,
+    });
+
     config.plugins.push(
       new webpack.IgnorePlugin(/[\\/]__tests__[\\/]/),
       new webpack.ContextReplacementPlugin(/moment[\\/]locale$/, /en|fr|es|ja/),
